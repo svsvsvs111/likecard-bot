@@ -5,7 +5,8 @@ from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandle
 from config import BOT_TOKEN
 from likecard_api import get_products, check_balance
 from database import add_subscription, get_subscriptions
-from scheduler import checker
+# ملاحظة: سنوقف checker مؤقتاً لتجنب الكراش
+# from scheduler import checker
 
 cached_products = {}
 
@@ -103,8 +104,8 @@ async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data.startswith("buy_"):
         await choose(update, context)
 
-# 🚀 التشغيل الصحيح (مهم جداً)
-async def main():
+# 🚀 التشغيل (بدون مشاكل Railway)
+def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
@@ -112,11 +113,11 @@ async def main():
 
     print("Bot running...")
 
-    # تشغيل الفحص بالخلفية
-    asyncio.create_task(checker(app.bot))
+    # ❌ مؤقتاً لا نشغل checker لتجنب crash
+    # asyncio.get_event_loop().create_task(checker(app.bot))
 
-    # تشغيل البوت
-    await app.run_polling()
+    app.run_polling()
+
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
