@@ -1,51 +1,69 @@
 import requests
-import hashlib
-import time
-from config import BASE_URL, API_KEY, SECRET
+from config import BASE_URL, EMAIL, DEVICE_ID, SECURITY_CODE
 
-def generate_headers():
-    timestamp = str(int(time.time()))
-    raw = API_KEY + timestamp + SECRET
-    signature = hashlib.sha256(raw.encode()).hexdigest()
-
+def base_payload():
     return {
-        "apiKey": API_KEY,
-        "time": timestamp,
-        "signature": signature,
-        "Content-Type": "application/json"
+        "email": EMAIL,
+        "deviceId": DEVICE_ID,
+        "securityCode": SECURITY_CODE,
+        "langId": 1
     }
 
+# 📦 المنتجات
 def get_products():
-    res = requests.post(BASE_URL + "/online/products", headers=generate_headers())
+    url = BASE_URL + "/online/products"
+
+    payload = base_payload()
+
+    res = requests.post(url, data=payload)
     return res.json()
 
+# 🔍 فحص المنتج
 def check_product(product_id):
     data = get_products()
+
     for p in data.get("data", []):
-        if p["id"] == product_id:
+        if str(p["id"]) == str(product_id):
             return p.get("inStock", False)
+
     return False
 
+# 🛒 إنشاء طلب
 def create_order(product_id):
-    res = requests.post(
-        BASE_URL + "/online/create_order",
-        json={"productId": product_id, "quantity": 1},
-        headers=generate_headers()
-    )
+    url = BASE_URL + "/online/create_order"
+
+    payload = base_payload()
+    payload.update({
+        "productId": product_id,
+        "quantity": 1
+    })
+
+    res = requests.post(url, data=payload)
+
     return res.json().get("data", {}).get("orderId")
 
+# 📄 تفاصيل الطلب
 def get_order_details(order_id):
-    res = requests.post(
-        BASE_URL + "/online/orders/details",
-        json={"orderId": order_id},
-        headers=generate_headers()
-    )
+    url = BASE_URL + "/online/orders/details"
+
+    payload = base_payload()
+    payload.update({
+        "orderId": order_id
+    })
+
+    res = requests.post(url, data=payload)
 
     try:
         return res.json()["data"]["cards"][0]["code"]
     except:
         return None
 
+# 💰 الرصيد
 def check_balance():
-    res = requests.post(BASE_URL + "/online/check_balance", headers=generate_headers())
+    url = BASE_URL + "/online/check_balance"
+
+    payload = base_payload()
+
+    res = requests.post(url, data=payload)
+
     return res.json()
