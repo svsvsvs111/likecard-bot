@@ -1,29 +1,35 @@
 import requests
 from config import BASE_URL, EMAIL, DEVICE_ID, SECURITY_CODE
 
+# 🔹 البيانات الأساسية لكل طلب
 def base_payload():
     return {
         "email": EMAIL,
         "deviceId": DEVICE_ID,
         "securityCode": SECURITY_CODE,
-        "langId": 1
+        "langId": 2  # 👈 مهم (2 = عربي)
     }
 
-# 📦 المنتجات
+# 📦 جلب المنتجات
 def get_products():
     url = BASE_URL + "/online/products"
 
     payload = base_payload()
 
     res = requests.post(url, data=payload)
-    return res.json()
 
-# 🔍 فحص المنتج
+    data = res.json()
+
+    print("PRODUCTS RESPONSE:", data)  # 👈 للمراقبة في Logs
+
+    return data
+
+# 🔍 فحص توفر المنتج
 def check_product(product_id):
     data = get_products()
 
     for p in data.get("data", []):
-        if str(p["id"]) == str(product_id):
+        if str(p.get("id")) == str(product_id):
             return p.get("inStock", False)
 
     return False
@@ -40,7 +46,11 @@ def create_order(product_id):
 
     res = requests.post(url, data=payload)
 
-    return res.json().get("data", {}).get("orderId")
+    data = res.json()
+
+    print("CREATE ORDER RESPONSE:", data)
+
+    return data.get("data", {}).get("orderId")
 
 # 📄 تفاصيل الطلب
 def get_order_details(order_id):
@@ -53,8 +63,12 @@ def get_order_details(order_id):
 
     res = requests.post(url, data=payload)
 
+    data = res.json()
+
+    print("ORDER DETAILS RESPONSE:", data)
+
     try:
-        return res.json()["data"]["cards"][0]["code"]
+        return data["data"]["cards"][0]["code"]
     except:
         return None
 
@@ -66,4 +80,8 @@ def check_balance():
 
     res = requests.post(url, data=payload)
 
-    return res.json()
+    data = res.json()
+
+    print("BALANCE RESPONSE:", data)
+
+    return data
